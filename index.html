@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Latte's WORKS - Web Configurator</title>
+    <style>
+        /* (※CSSは前回と同じプロ仕様のダークUIです。一部追加しています) */
+        :root {
+            --bg-main: #0d0d12;
+            --bg-panel: #181820;
+            --bg-input: #23232e;
+            --accent: #ff3c50;
+            --accent-hover: #ff5e6f;
+            --success: #00e676;
+            --text-main: #ffffff;
+            --text-muted: #8b8b9e;
+            --border: #2d2d3b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title h1 {
+            color: var(--text-main);
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .header-title span {
+            color: var(--accent);
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #2a1114;
+            color: var(--accent);
+            border: 1px solid rgba(255, 60, 80, 0.3);
+            transition: 0.3s;
+        }
+
+        .status-badge.connected {
+            background: #0a2e1b;
+            color: var(--success);
+            border-color: rgba(0, 230, 118, 0.3);
+        }
+
+        /* ★ NEW: OS切り替えトグル */
+        .os-toggle-wrap {
+            display: flex;
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .os-toggle-label {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-muted);
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .os-toggle-label.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .os-toggle-input {
+            display: none;
+        }
+
+        .info-panel {
+            background: linear-gradient(145deg, #1c2135, #141726);
+            border-left: 4px solid #4a72ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d0d5ff;
+        }
+
+        .info-panel h4 {
+            margin: 0 0 8px 0;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #333;
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .key-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .v-key {
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.05), 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .v-key:hover {
+            background: #2a2a38;
+        }
+
+        .v-key.active {
+            border-color: var(--accent);
+            background: #251618;
+            box-shadow: 0 0 15px rgba(255, 60, 80, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.05);
+        }
+
+        .v-key-label {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 6px;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+        }
+
+        .v-key-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: white;
+            font-size: 15px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 60, 80, 0.2);
+        }
+
+        .mod-checks {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mod-checks label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            color: #fff;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .mod-checks input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .capture-btn {
+            background-color: var(--bg-input);
+            border: 2px dashed #555;
+            color: var(--text-muted);
+            width: 100%;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+
+        .capture-btn:hover {
+            border-color: #888;
+            color: #fff;
+        }
+
+        .capture-btn.listening {
+            background-color: rgba(255, 60, 80, 0.1);
+            color: var(--accent);
+            border-color: var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        .capture-btn.set {
+            background-color: rgba(0, 230, 118, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+            border-style: solid;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 60, 80, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 60, 80, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 60, 80, 0);
+            }
+        }
+
+        .console-box {
+            background-color: #08080a;
+            border-left: 3px solid var(--text-muted);
+            color: #a0a0b5;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            height: 100px;
+            overflow-y: auto;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>Latte's <span>WORKS</span></h1>
+                <div style="color:var(--text-muted); font-size:14px;">Web Configurator - Pro Edition</div>
+            </div>
+            <div id="statusBadge" class="status-badge">🔴 デバイス未接続</div>
+        </div>
+
+        <div id="connectWrap" style="text-align: center; margin: 60px 0;">
+            <button id="connectBtn"
+                style="font-size: 18px; padding: 18px 40px; border-radius: 30px; box-shadow: 0 10px 20px rgba(255,60,80,0.3);">
+                🔌 USBデバイスに接続する
+            </button>
+        </div>
+
+        <div id="configArea" class="hidden">
+
+            <div class="os-toggle-wrap">
+                <label id="lblWin" class="os-toggle-label active">
+                    <input type="radio" class="os-toggle-input" name="targetOs" value="win" checked>
+                    🪟 Windows向けに編集
+                </label>
+                <label id="lblMac" class="os-toggle-label">
+                    <input type="radio" class="os-toggle-input" name="targetOs" value="mac">
+                    🍎 macOS向けに編集
+                </label>
+            </div>
+
+            <div id="macInfoPanel" class="info-panel hidden">
+                <h4>🍎 Macでのジェスチャーとアプリ起動について</h4>
+                ・アプリ起動機能（🚀）は、Mac標準の<b>Spotlight検索 (Cmd + Space)</b> を使用して実行されます。<br>
+                ・3本指/4本指ジェスチャーを動かすため、Macの設定で以下が有効か確認してください。<br>
+                　[ Mission Control: <code>Ctrl + ↑/↓</code> ] [ 操作スペース移動: <code>Ctrl + ←/→</code> ] [ デスクトップ表示:
+                <code>F11</code> ]
+            </div>
+
+            <div class="panel flex-row" style="padding: 15px 25px;">
+                <div style="display: flex; align-items: center; gap: 15px; width: 70%;">
+                    <label style="margin: 0; color: #fff;">📦 構成プリセット:</label>
+                    <select id="bulkPresetSelect" style="margin: 0; flex-grow: 1;">
+                        <option value="default">✨ 汎用デフォルト (基本操作＋画面切取)</option>
+                        <option value="creator">🎨 クリエイター向け (画像・映像編集)</option>
+                        <option value="media">🎵 メディアコントローラー</option>
+                        <option value="empty">🗑️ 全て空っぽ (リセット)</option>
+                    </select>
+                </div>
+                <button id="applyBulkBtn" style="background: #333; color: #fff; border: 1px solid #555;">画面に展開</button>
+            </div>
+
+            <div class="key-grid" id="keyGrid"></div>
+
+            <div style="text-align: right; margin: 25px 0;">
+                <button id="syncBtn"
+                    style="background:#00e676; color:#000; font-size:16px; padding:15px 30px; box-shadow: 0 8px 20px rgba(0,230,118,0.3);">
+                    🚀 全12キーをデバイスに同期 (書き込み)
+                </button>
+            </div>
+
+            <div class="panel" id="editPanel">
+                <div class="flex-row" style="margin-bottom: 20px;">
+                    <h3 id="editTitle" style="margin:0; color:var(--accent); font-size: 20px;">Button 1 を編集中</h3>
+                </div>
+
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <label>ボタンの表示名 (最大8文字)</label>
+                        <input type="text" id="btnLabel" maxlength="8" style="font-weight:bold; letter-spacing: 1px;">
+                    </div>
+                    <div style="flex: 2;">
+                        <label>アクションタイプ</label>
+                        <select id="actionType">
+                            <option value="0">🔠 単一キー</option>
+                            <option value="1">⚡ ショートカット (修飾キー ＋ 追加キー)</option>
+                            <option value="2">📝 テキスト入力 (定型文やパスワード)</option>
+                            <option value="3" id="optAppLaunch">🚀 アプリ起動 (Windows: ファイル名を指定して実行)</option>
+                            <option value="4">🎵 メディア操作 (再生・音量など)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="panelKeyCapture"
+                    style="background: var(--bg-main); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div id="modifierArea" class="mod-checks hidden">
+                        <label><input type="checkbox" id="modCtrl"> Ctrl</label>
+                        <label><input type="checkbox" id="modShift"> Shift</label>
+                        <label><input type="checkbox" id="modAlt" id="lblAlt"> <span id="textAlt">Alt</span></label>
+                        <label><input type="checkbox" id="modWin"> <span id="textWin">Win</span></label>
+                    </div>
+                    <div id="captureBtn" class="capture-btn">ここをクリックしてキーボードを押す</div>
+                </div>
+
+                <div id="panelText" class="hidden"
+                    style="background: var(--bg-main); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+                    <label id="textLabel">出力するテキスト (最大30文字)</label>
+                    <input type="text" id="macroText" placeholder="半角英数字で入力してください" style="margin-bottom: 5px;">
+                </div>
+
+                <div id="panelMedia" class="hidden"
+                    style="background: var(--bg-main); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+                    <label>メディアアクション</label>
+                    <select id="mediaSelect" style="margin-bottom: 0;">
+                        <option value="205">⏯️ 再生 / 一時停止</option>
+                        <option value="181">⏭️ 次の曲</option>
+                        <option value="182">⏮️ 前の曲</option>
+                        <option value="233">🔊 音量アップ</option>
+                        <option value="234">🔉 音量ダウン</option>
+                        <option value="226">🔇 ミュート</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="debugConsole" class="console-box">[System Log Ready]</div>
+    </div>
+
+    <script>
+        let port, writer;
+        const debugConsole = document.getElementById('debugConsole');
+        const statusBadge = document.getElementById('statusBadge');
+        let currentEditIndex = 0;
+        let isListeningKey = false;
+        let currentTargetOs = 'win'; // 現在のターゲットOS ('win' or 'mac')
+
+        let keysData = Array(12).fill().map((_, i) => ({
+            label: `B${i + 1}`, type: '0', kCode: 0, keyName: '未設定', mods: { c: 0, s: 0, a: 0, w: 0 }, text: ' '
+        }));
+
+        // ベースとなるプリセット定義
+        const basePresets = {
+            empty: Array(12).fill().map((_, i) => ({ label: "", type: '0', kCode: 0, keyName: '未設定', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " })),
+            default: [
+                { label: "Copy", type: '1', kCode: 99, keyName: 'c', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Paste", type: '1', kCode: 118, keyName: 'v', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Cut", type: '1', kCode: 120, keyName: 'x', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Undo", type: '1', kCode: 122, keyName: 'z', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Save", type: '1', kCode: 115, keyName: 's', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "ScrShot", type: '1', kCode: 115, keyName: 's', mods: { c: 0, s: 1, a: 0, w: 1 }, text: " " },
+                { label: "Zoom In", type: '1', kCode: 43, keyName: '+', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Zoom Out", type: '1', kCode: 45, keyName: '-', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Web", type: '3', kCode: 0, keyName: '', mods: { c: 0, s: 0, a: 0, w: 0 }, text: "chrome" },
+                { label: "Calc", type: '3', kCode: 0, keyName: '', mods: { c: 0, s: 0, a: 0, w: 0 }, text: "calc" },
+                { label: "Enter", type: '0', kCode: 176, keyName: 'Enter', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Esc", type: '0', kCode: 177, keyName: 'Escape', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " }
+            ],
+            creator: [
+                { label: "Brush", type: '0', kCode: 98, keyName: 'b', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Eraser", type: '0', kCode: 101, keyName: 'e', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Hand", type: '0', kCode: 32, keyName: 'Space', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Undo", type: '1', kCode: 122, keyName: 'z', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Redo", type: '1', kCode: 122, keyName: 'z', mods: { c: 1, s: 1, a: 0, w: 0 }, text: " " },
+                { label: "Zoom In", type: '1', kCode: 43, keyName: '+', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Zoom Out", type: '1', kCode: 45, keyName: '-', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Fit Scr", type: '1', kCode: 48, keyName: '0', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Save", type: '1', kCode: 115, keyName: 's', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Save As", type: '1', kCode: 115, keyName: 's', mods: { c: 1, s: 1, a: 0, w: 0 }, text: " " },
+                { label: "Copy", type: '1', kCode: 99, keyName: 'c', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Paste", type: '1', kCode: 118, keyName: 'v', mods: { c: 1, s: 0, a: 0, w: 0 }, text: " " }
+            ],
+            media: [
+                { label: "Play", type: '4', kCode: 205, keyName: 'Play/Pause', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Prev", type: '4', kCode: 182, keyName: 'Prev', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Next", type: '4', kCode: 181, keyName: 'Next', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Vol +", type: '4', kCode: 233, keyName: 'Vol Up', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Vol -", type: '4', kCode: 234, keyName: 'Vol Down', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                { label: "Mute", type: '4', kCode: 226, keyName: 'Mute', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " },
+                ...Array(6).fill().map(() => ({ label: "", type: '0', kCode: 0, keyName: '未設定', mods: { c: 0, s: 0, a: 0, w: 0 }, text: " " }))
+            ]
+        };
+
+       // ★ NEW: OSに応じたプリセットを生成する関数 (スクショ完全対応版)
+        function getPresetsForOS() {
+            let presets = JSON.parse(JSON.stringify(basePresets));
+            if (currentTargetOs === 'mac') {
+                for (let key in presets) {
+                    presets[key].forEach(btn => {
+                        // 1. 汎用的な Ctrl -> Cmd 変換
+                        if (btn.type === '1' && btn.mods.c === 1) {
+                            btn.mods.c = 0; // Ctrlを消す
+                            btn.mods.w = 1; // Cmd(Win)をオンにする
+                        }
+
+                        // 2. ★ スクリーンショットの特別変換 (Win+Shift+S -> Cmd+Shift+4)
+                        if (btn.label === "ScrShot") {
+                            btn.kCode = 52; // '4' のASCIIコード
+                            btn.keyName = '4';
+                            // ※ modifiers の Cmd(w) と Shift(s) はすでにオンなのでそのまま維持
+                        }
+                    });
+                }
+            }
+            return presets;
+        }
+
+        keysData = JSON.parse(JSON.stringify(getPresetsForOS().default));
+
+        function printLog(msg) {
+            debugConsole.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('keyGrid');
+            grid.innerHTML = '';
+            keysData.forEach((key, index) => {
+                const btn = document.createElement('div');
+                btn.className = `v-key ${index === currentEditIndex ? 'active' : ''}`;
+
+                let desc = "";
+                if (key.type === '0') desc = `単一: ${key.keyName}`;
+                if (key.type === '1') {
+                    let m = [];
+                    if (key.mods.c) m.push("Ctrl");
+                    if (key.mods.s) m.push("Shift");
+                    if (key.mods.a) m.push(currentTargetOs === 'mac' ? "Option" : "Alt");
+                    if (key.mods.w) m.push(currentTargetOs === 'mac' ? "Cmd" : "Win");
+                    desc = `${m.join('+')}${m.length > 0 ? '+' : ''}${key.keyName}`;
+                }
+                if (key.type === '2') desc = `テキスト出力`;
+                if (key.type === '3') desc = `アプリ起動`;
+                if (key.type === '4') desc = `メディア操作`;
+                if (!key.label) desc = "未設定";
+
+                btn.innerHTML = `<div class="v-key-label">${key.label || '---'}</div><div class="v-key-desc">${desc}</div>`;
+                btn.onclick = () => selectKey(index);
+                grid.appendChild(btn);
+            });
+        }
+
+        // ★ NEW: OS切り替えスイッチの処理
+        const radioBtns = document.querySelectorAll('.os-toggle-input');
+        radioBtns.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentTargetOs = e.target.value;
+                document.getElementById('lblWin').classList.toggle('active', currentTargetOs === 'win');
+                document.getElementById('lblMac').classList.toggle('active', currentTargetOs === 'mac');
+
+                // Mac専用パネルと表記の切り替え
+                document.getElementById('macInfoPanel').classList.toggle('hidden', currentTargetOs === 'win');
+                document.getElementById('textAlt').innerText = currentTargetOs === 'mac' ? 'Option' : 'Alt';
+                document.getElementById('textWin').innerText = currentTargetOs === 'mac' ? 'Cmd' : 'Win';
+                document.getElementById('optAppLaunch').innerText = currentTargetOs === 'mac' ? '🚀 アプリ起動 (Mac: Spotlight検索)' : '🚀 アプリ起動 (Windows: ファイル名を指定して実行)';
+
+                printLog(`🔄 編集ターゲットを ${currentTargetOs === 'mac' ? 'macOS' : 'Windows'} に切り替えました。`);
+                renderGrid();
+                updatePanelVisibility();
+            });
+        });
+
+        function selectKey(index, skipSave = false) {
+            if (!skipSave) saveCurrentEdit();
+            currentEditIndex = index;
+            renderGrid();
+
+            const data = keysData[index];
+            document.getElementById('editTitle').innerText = `Button ${index + 1} を編集中`;
+            document.getElementById('btnLabel').value = data.label;
+            document.getElementById('actionType').value = data.type;
+
+            document.getElementById('modCtrl').checked = data.mods.c;
+            document.getElementById('modShift').checked = data.mods.s;
+            document.getElementById('modAlt').checked = data.mods.a;
+            document.getElementById('modWin').checked = data.mods.w;
+
+            if (data.type === '4') { document.getElementById('mediaSelect').value = data.kCode || "205"; }
+
+            const capBtn = document.getElementById('captureBtn');
+            if (data.keyName && data.keyName !== '未設定') {
+                capBtn.innerText = `設定済み: [ ${data.keyName} ]`;
+                capBtn.className = "capture-btn set";
+            } else {
+                capBtn.innerText = "ここをクリックしてキーボードを押す";
+                capBtn.className = "capture-btn";
+            }
+
+            document.getElementById('macroText').value = data.text === " " ? "" : data.text;
+            updatePanelVisibility();
+        }
+
+        function saveCurrentEdit() {
+            const data = keysData[currentEditIndex];
+            data.label = document.getElementById('btnLabel').value;
+            data.type = document.getElementById('actionType').value;
+            data.mods.c = document.getElementById('modCtrl').checked ? 1 : 0;
+            data.mods.s = document.getElementById('modShift').checked ? 1 : 0;
+            data.mods.a = document.getElementById('modAlt').checked ? 1 : 0;
+            data.mods.w = document.getElementById('modWin').checked ? 1 : 0;
+            data.text = document.getElementById('macroText').value || " ";
+
+            if (data.type === '4') {
+                data.kCode = parseInt(document.getElementById('mediaSelect').value);
+                data.keyName = document.getElementById('mediaSelect').options[document.getElementById('mediaSelect').selectedIndex].text.split(' ')[1];
+            }
+        }
+
+        function updatePanelVisibility() {
+            const type = document.getElementById('actionType').value;
+            document.getElementById('panelKeyCapture').classList.toggle('hidden', type !== '0' && type !== '1');
+            document.getElementById('modifierArea').classList.toggle('hidden', type === '0');
+            document.getElementById('panelText').classList.toggle('hidden', type !== '2' && type !== '3');
+            document.getElementById('panelMedia').classList.toggle('hidden', type !== '4');
+
+            if (type === '2') document.getElementById('textLabel').innerText = "出力するテキスト (最大30文字):";
+            if (type === '3') document.getElementById('textLabel').innerText = currentTargetOs === 'mac' ? "起動するアプリのコマンド (safari, calc 等):" : "起動するアプリのコマンド (chrome, calc 等):";
+        }
+
+        document.getElementById('macroText').addEventListener('input', function (e) {
+            const originalValue = this.value;
+            this.value = this.value.replace(/[^\x20-\x7E]/g, '');
+            if (originalValue !== this.value) saveCurrentEdit();
+        });
+
+        document.getElementById('btnLabel').addEventListener('input', () => { saveCurrentEdit(); renderGrid(); });
+        document.getElementById('actionType').addEventListener('change', () => { saveCurrentEdit(); updatePanelVisibility(); renderGrid(); });
+        ['modCtrl', 'modShift', 'modAlt', 'modWin'].forEach(id => document.getElementById(id).addEventListener('change', () => { saveCurrentEdit(); renderGrid(); }));
+        document.getElementById('mediaSelect').addEventListener('change', () => { saveCurrentEdit(); renderGrid(); });
+
+        const captureBtn = document.getElementById('captureBtn');
+        captureBtn.addEventListener('click', () => {
+            isListeningKey = true;
+            captureBtn.innerText = "キーボードのキーを押してください...";
+            captureBtn.className = "capture-btn listening";
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!isListeningKey) return;
+            e.preventDefault();
+            isListeningKey = false;
+            const map = { "Enter": 176, "Escape": 177, "Backspace": 178, "Tab": 179, "ArrowUp": 218, "ArrowDown": 217, "ArrowLeft": 216, "ArrowRight": 215, "Delete": 212, " ": 32 };
+            let code = 0; let displayName = e.key;
+
+            if (e.key === "Process" || e.key.match(/[^\x20-\x7E]/) && !map[e.key]) {
+                captureBtn.innerText = "⚠️ IMEをオフにして、もう一度やり直してください";
+                captureBtn.className = "capture-btn"; captureBtn.style.borderColor = "#ff3c50"; captureBtn.style.color = "#ff3c50"; return;
+            }
+            if (map[e.key]) { code = map[e.key]; } else if (e.key.length === 1) { code = e.key.charCodeAt(0); if (code >= 65 && code <= 90) code += 32; }
+            else { captureBtn.innerText = "もう一度クリックしてやり直してください"; captureBtn.className = "capture-btn"; captureBtn.style.borderColor = "#ff3c50"; captureBtn.style.color = "#ff3c50"; return; }
+
+            keysData[currentEditIndex].kCode = code; keysData[currentEditIndex].keyName = displayName;
+            captureBtn.innerText = `設定完了: [ ${displayName} ]`; captureBtn.className = "capture-btn set";
+            saveCurrentEdit(); renderGrid();
+        });
+
+        document.getElementById('applyBulkBtn').addEventListener('click', () => {
+            const presetId = document.getElementById('bulkPresetSelect').value;
+            const currentPresets = getPresetsForOS(); // ★ 現在のOSに合わせたプリセットを生成
+            keysData = JSON.parse(JSON.stringify(currentPresets[presetId]));
+            selectKey(0, true);
+            printLog(`📦 構成「${presetId}」を展開しました。同期ボタンを押すとデバイスに書き込まれます。`);
+        });
+
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                const textEncoder = new TextEncoderStream();
+                textEncoder.readable.pipeTo(port.writable);
+                writer = textEncoder.writable.getWriter();
+
+                printLog("✅ デバイスに接続しました！");
+                document.getElementById('connectWrap').classList.add('hidden');
+                document.getElementById('configArea').classList.remove('hidden');
+                statusBadge.innerHTML = "🟢 デバイス接続済み"; statusBadge.classList.add("connected");
+                renderGrid(); selectKey(0);
+            } catch (err) { printLog(`❌ エラー: ${err.message}`); }
+        });
+
+        document.getElementById('syncBtn').addEventListener('click', async () => {
+            if (!writer) return;
+            saveCurrentEdit();
+            document.getElementById('syncBtn').disabled = true; document.getElementById('syncBtn').innerText = "🔄 デバイスへ書き込み中...";
+            printLog("🚀 全12キーのデバイス同期を開始します...");
+
+            for (let i = 0; i < 12; i++) {
+                const data = keysData[i];
+                let mods = 0;
+                if (data.mods.c) mods |= 1; if (data.mods.s) mods |= 2; if (data.mods.a) mods |= 4; if (data.mods.w) mods |= 8;
+                const safeLabel = data.label || " "; const safeText = data.text || " ";
+                const command = `MACRO:${i},${data.type},${data.kCode},${mods},${safeLabel},${safeText}\n`;
+                try { await writer.write(command); await new Promise(resolve => setTimeout(resolve, 100)); }
+                catch (e) { printLog(`❌ 送信エラー (Button ${i + 1}): ${e.message}`); break; }
+            }
+            printLog("✨ 全12キーの同期が完了しました！");
+            document.getElementById('syncBtn').disabled = false; document.getElementById('syncBtn').innerText = "🚀 全12キーをデバイスに同期 (書き込み)";
+        });
+    </script>
+</body>
+
+</html>
