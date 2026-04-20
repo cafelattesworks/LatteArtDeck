@@ -1,6 +1,7 @@
 # 🌟 LatteArt Deck
 
 美しいアニメーションを備えた高精度タッチパッド（PTP）、マクロパッド、テンキー、フルキーボードを統合した新しいカスタム入力デバイスです。ESP32S3(技適取得済み)とLovyanGFXをベースに構築されており、直感的なタッチ＆スワイプ操作と物理エンコーダーによるPCコントロールを実現します。
+<img width="512" height="768" alt="ChatGPT Image 2025年12月20日 19_24_30" src="https://github.com/user-attachments/assets/17f96e70-1136-48ea-88ae-9ac44f366ced" />
 
 ## ✨ 主な特徴 (Features)
 
@@ -88,3 +89,7 @@ https://cafelattesworks.github.io/LatteArtDeck/
 6. **Brightness:** パソコンの画面の明るさ調整
 
 ---
+
+<img width="2016" height="1512" alt="IMG_8452" src="https://github.com/user-attachments/assets/7146d6e8-68ca-4bc4-aad0-4e6c86a5d46b" />
+
+
